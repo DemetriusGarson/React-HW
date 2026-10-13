@@ -7,11 +7,14 @@ interface SearchBarProps {
 export default function SearchBar({ onSubmit }: SearchBarProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const hasSubmitted = useRef(false);
+  const hasAutoSearch = useRef(false);
+
   const [inputValue, setInputValue] = useState<string>(() => {
     const savedInputValue = window.localStorage.getItem('inputValue');
     if (savedInputValue === null) return '';
     return savedInputValue;
   });
+
   const [isRepeatSearch, setIsRepeatSearch] = useState<boolean>(() => {
     if (window.localStorage.getItem('repeatSearch') === 'true') {
       return true;
@@ -44,7 +47,18 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     onSubmit(formData);
-    //  setInputValue('');
+
+    const wasAutoSearch = hasAutoSearch.current;
+    hasAutoSearch.current = false;
+
+    if (!isRepeatSearch) {
+      window.localStorage.setItem('inputValue', '');
+      setInputValue('');
+    }
+
+    if (!wasAutoSearch) {
+      setInputValue('');
+    }
   };
 
   useEffect(() => {
@@ -55,6 +69,8 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
     if (hasSubmitted.current) return;
 
     hasSubmitted.current = true;
+
+    hasAutoSearch.current = true;
 
     formRef.current?.requestSubmit();
   }, []);
